@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meeting Copilot</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,600&display=swap">
+<style>
+:root{--bg:#f3f4f6;--surface:#fff;--sunk:#e9ebf0;--line:#d6d9e1;--fg:#1b1f2a;--muted:#5d6475;--accent:#2b47a8;--accent-ink:#fff;--accent-soft:#e3e8f8;
+  --ok:#22744a;--ok-soft:#dcefe4;--part:#a2650d;--part-soft:#f6ead3;--skip:#7a7f8c;--skip-soft:#e7e8ec;--bad:#b4372f;--rec:#c0392b;
+  --f-display:"Newsreader",Georgia,serif;--f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#12151c;--surface:#1a1e27;--sunk:#232834;--line:#323848;--fg:#e6e8ee;--muted:#9aa1b2;--accent:#8fa6f5;--accent-ink:#0f1320;--accent-soft:#252d4a;
+  --ok:#6fcf98;--ok-soft:#1d3628;--part:#e6b25c;--part-soft:#3a2f1b;--skip:#9a9fac;--skip-soft:#2a2e38;--bad:#f08a80;--rec:#f07a6e;color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;padding:16px 16px 40px}
+.wrap{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1,h2,h3{margin:0}
+h1{font-family:var(--f-display);font-size:1.5rem}
+h2{font-family:var(--f-display);font-size:1.25rem}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;font-weight:500}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=text],input[type=password],textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.hint{color:var(--muted);font-size:.83rem}
+.eyebrow{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.box{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.mic{display:flex;align-items:center;gap:10px}
+#micBtn{font-size:1.02rem;padding:10px 16px}
+#micBtn.on{background:var(--rec);border-color:var(--rec);color:#fff}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--muted);display:inline-block}
+.live .dot{background:var(--rec);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.live .dot{animation:none}.q.flash{animation:none}}
+.views button[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.tab{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:150px;text-align:left;padding:9px 12px}
+.tab[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft)}
+.tab .nm{font-weight:600}.tab .tm,.tab .ct{font-size:.75rem;color:var(--muted)}
+.bar{height:5px;width:100%;background:var(--sunk);border-radius:3px;overflow:hidden;display:flex}
+.bar i{display:block;height:100%}.bar .a{background:var(--ok)}.bar .p{background:var(--part)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start}
+@media (max-width:980px){.grid{grid-template-columns:minmax(0,1fr)}}
+.lh{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.types{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.types button{border:none;border-radius:0;padding:6px 12px;font-size:.88rem}
+.types button+button{border-left:1px solid var(--line)}
+.types button[aria-pressed=true]{background:var(--fg);color:var(--bg)}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filters button{padding:3px 10px;font-size:.83rem;border-radius:999px}
+.filters button[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent)}
+#qlist{list-style:none;margin:0;padding:0}
+.q{display:grid;grid-template-columns:2.6rem minmax(0,1fr) auto;gap:4px 12px;padding:11px 16px;border-bottom:1px solid var(--line)}
+.q .n{font-family:var(--f-mono);color:var(--muted);font-size:.83rem;padding-top:2px}
+.q .txt{font-weight:500}
+.q .sub{display:flex;gap:10px;flex-wrap:wrap;font-size:.76rem;color:var(--muted)}
+.q .ans{grid-column:2/4;display:flex;flex-direction:column;gap:5px}
+.q .ans textarea{font-size:.9rem;min-height:2.3rem;background:var(--bg);resize:vertical}
+.q .quote{font-size:.8rem;color:var(--muted);border-left:2px solid var(--line);padding-left:8px}
+.q.flash{animation:flash 2.4s ease-out}
+@keyframes flash{from{background:var(--accent-soft)}to{background:transparent}}
+.tag{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.tag.must{color:var(--bad)}.tag.crit{color:var(--part)}
+.group{padding:9px 16px;background:var(--sunk);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:2px;list-style:none}
+.group .gt{font-weight:600;font-size:.87rem}.group .gc{font-size:.8rem;color:var(--muted)}
+.pill{border-radius:999px;padding:3px 10px;font-size:.78rem;font-weight:600;white-space:nowrap;border:1px solid transparent;align-self:start}
+.pill.open{background:var(--sunk);color:var(--muted);border-color:var(--line)}
+.pill.partial{background:var(--part-soft);color:var(--part)}
+.pill.answered{background:var(--ok-soft);color:var(--ok)}
+.pill.skipped{background:var(--skip-soft);color:var(--skip);text-decoration:line-through}
+.side{display:flex;flex-direction:column;gap:14px;position:sticky;top:12px}
+@media (max-width:980px){.side{position:static}}
+#feed{max-height:260px;overflow:auto;font-size:.86rem;display:flex;flex-direction:column;gap:3px}
+#feed .t{font-family:var(--f-mono);color:var(--muted);font-size:.75rem;margin-right:6px}
+#feed .done{opacity:.5}
+#feed .note{font-weight:600}
+#interim{color:var(--muted);font-style:italic;font-size:.86rem;min-height:1.3em}
+#aiState{font-size:.85rem}
+#aiState.err{color:var(--bad)}
+.notes{margin:0;padding-left:18px;font-size:.86rem;display:flex;flex-direction:column;gap:4px}
+.report{padding:18px;display:flex;flex-direction:column;gap:20px}
+.rep-co{display:flex;flex-direction:column;gap:6px}
+.rep-co ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:3px}
+details.dd summary{cursor:pointer;font-weight:600;font-size:.87rem}
+.setup{border-color:var(--accent)}
+.badge{background:var(--accent-soft);border-radius:999px;padding:2px 10px;font-size:.8rem}
+.check{display:flex;gap:6px;align-items:center;font-size:.85rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- LOGIN -->
+  <section id="login" class="panel box" style="max-width:420px;margin:12vh auto 0" hidden>
+    <span class="eyebrow">Inspark · Meeting Copilot</span>
+    <h1>Giriş</h1>
+    <form id="loginForm" class="box" style="padding:0">
+      <label class="hint" for="email">E-posta</label>
+      <input type="text" id="email" autocomplete="username" required>
+      <label class="hint" for="password">Şifre</label>
+      <input type="password" id="password" autocomplete="current-password" required>
+      <button class="primary" type="submit">Giriş yap</button>
+      <span class="hint" id="loginMsg"></span>
+    </form>
+  </section>
+
+  <div id="app" hidden>
+    <div class="top">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <span class="eyebrow">Tegeta Discovery · canlı</span>
+        <h1>Meeting Copilot</h1>
+        <span class="hint" id="who"></span>
+      </div>
+      <div class="mic" id="micWrap">
+        <button id="micBtn" class="primary">● Kaydı başlat</button>
+        <select id="lang" aria-label="Konuşma dili"><option value="en-US">English</option><option value="tr-TR">Türkçe</option><option value="ka-GE">ქართული</option></select>
+        <span class="hint" id="micState"><span class="dot"></span> Kayıt yok</span>
+      </div>
+      <nav class="row views">
+        <button id="vBoard" aria-pressed="true">Canlı takip</button>
+        <button id="vReport" aria-pressed="false">Kapanış raporu</button>
+        <button id="logout">Çıkış</button>
+      </nav>
+    </div>
+
+    <div id="banner" class="panel box" hidden></div>
+
+    <div class="tabs" id="tabs" role="tablist" aria-label="Oturumlar"></div>
+
+    <section id="board" class="grid">
+      <div class="panel">
+        <div class="lh">
+          <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+            <h2 id="coName"></h2><span class="hint" id="coFocus"></span><span class="hint" id="liveTag"></span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+            <div class="row">
+              <div class="types" id="types"><button data-t="core" aria-pressed="true">Core</button><button data-t="deep" aria-pressed="false">Deep-dive</button></div>
+              <button id="addBtn">+ Soru ekle</button>
+            </div>
+            <div class="filters" id="filters">
+              <button data-f="all" aria-pressed="true">Tümü</button><button data-f="open" aria-pressed="false">Açık</button>
+              <button data-f="partial" aria-pressed="false">Kısmen</button><button data-f="answered" aria-pressed="false">Cevaplandı</button>
+              <button data-f="must" aria-pressed="false">Must ask</button>
+            </div>
+          </div>
+        </div>
+        <form id="addForm" class="box" style="border-bottom:1px solid var(--line);background:var(--sunk)" hidden>
+          <span class="eyebrow" id="addTitle">Yeni soru</span>
+          <div class="row" role="radiogroup" aria-label="Soru türü">
+            <label class="check"><input type="radio" name="qtype" value="core" checked> Core</label>
+            <label class="check"><input type="radio" name="qtype" value="deep"> Deep-dive</label>
+          </div>
+          <div id="parentRow" class="row" hidden>
+            <label class="hint" for="parentSel">Bağlı olduğu core soru</label>
+            <select id="parentSel" style="flex:1;min-width:0;max-width:100%"></select>
+          </div>
+          <div id="stageRow" class="row">
+            <label class="hint" for="stageIn">Konu</label>
+            <input type="text" id="stageIn" placeholder="örn. Pricing approvals" style="flex:1;min-width:180px">
+          </div>
+          <textarea id="qText" rows="2" placeholder="Soru metni" required></textarea>
+          <div class="row" style="justify-content:space-between">
+            <label class="check">Öncelik
+              <select id="prioSel"><option>Must ask</option><option selected>Use if relevant</option><option>Optional</option></select></label>
+            <div class="row"><button type="button" id="addCancel">Vazgeç</button><button class="primary" type="submit">Ekle</button></div>
+          </div>
+          <span class="hint" id="addMsg"></span>
+        </form>
+        <ul id="qlist" lang="en"></ul>
+      </div>
+      <aside class="side">
+        <div class="panel box">
+          <div class="row" style="justify-content:space-between"><span class="eyebrow">Canlı transkript</span><span class="badge mono" id="pending">0 kelime bekliyor</span></div>
+          <div id="feed" lang="en"></div>
+          <div id="interim"></div>
+          <input type="text" id="noteIn" placeholder="Not ekle (Enter): örn. “CFO konuşuyor”, “T-One demo başladı”">
+          <div class="row" style="justify-content:space-between">
+            <span id="aiState" class="hint">Claude bekliyor.</span>
+            <button id="runNow">Şimdi analiz et</button>
+          </div>
+          <label class="check"><input type="checkbox" id="autoSession"> Canlı oturumu programdaki saate göre değiştir</label>
+        </div>
+        <div class="panel box"><span class="eyebrow">Sorulara uymayan notlar</span><ul class="notes" id="notes" lang="en"></ul></div>
+      </aside>
+    </section>
+
+    <section id="report" class="panel" hidden><div class="report" id="reportBody" lang="en"></div></section>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
+<script>
+const STATUS={open:"Açık",partial:"Kısmen",answered:"Cevaplandı",skipped:"Atlandı"};
+const CYCLE=["open","partial","answered","skipped"];
+const INTERVAL=60, HEARTBEAT=15000, STALE=45000;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const hhmm=ts=>new Date(ts).toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+const isMust=q=>/must|critical/i.test(q.priority||"");
+const lsGet=k=>{try{return localStorage.getItem(k);}catch{return null;}}, lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch{}};
+
+let sb=null, me=null;
+const S={sessions:[], Q:new Map(), segs:[], notes:[], app:{}, tab:lsGet("mc.tab"), type:"core", filter:"all", view:"board", flash:new Set(), lastCall:0, backoff:0};
+
+/* ---------- helpers ---------- */
+const qsOf=(sid,type)=>[...S.Q.values()].filter(q=>q.session_id===sid&&(!type||q.type===type)).sort((a,b)=>(a.step??999)-(b.step??999)||a.ord-b.ord);
+function counts(sid,type){ const c={total:0,open:0,partial:0,answered:0,skipped:0}; qsOf(sid,type).forEach(q=>{c.total++;c[q.status]++;}); return c; }
+const sessName=id=>(S.sessions.find(s=>s.id===id)||{}).name||"";
+const pending=()=>S.segs.filter(s=>!s.processed);
+const pendingWords=()=>pending().reduce((a,s)=>a+s.text.split(/\s+/).filter(Boolean).length,0);
+const iAmRecording=()=>!!want;
+const micFresh=()=>S.app.mic_holder&&S.app.mic_heartbeat&&(Date.now()-new Date(S.app.mic_heartbeat).getTime()<STALE);
+function banner(m){ $("banner").textContent=m||""; $("banner").hidden=!m; }
+function aiState(m,err){ $("aiState").textContent=m; $("aiState").classList.toggle("err",!!err); }
+async function guard(p){ const {error}=await p; if(error){ banner("Kaydedilemedi: "+error.message); throw error; } }
+
+/* ---------- render ---------- */
+function render(){ const ae=document.activeElement; const editing=ae&&ae.closest&&ae.closest("#qlist")&&ae.tagName==="TEXTAREA";
+  renderTabs(); if(!editing) renderList(); renderFeed(); renderNotes(); renderMic(); renderAi(); if(S.view==="report") renderReport(); }
+function renderTabs(){ if(!S.sessions.length) return;
+  if(!S.tab||!S.sessions.find(s=>s.id===S.tab)) S.tab=S.app.active_session||S.sessions[0].id;
+  $("tabs").innerHTML=S.sessions.map(s=>{ const k=counts(s.id,"core"), d=counts(s.id,"deep"), t=k.total||1, live=s.id===S.app.active_session;
+    return `<button class="tab" data-cid="${s.id}" aria-pressed="${s.id===S.tab}"><span class="tm mono">${esc(s.time||"")}${live?' · <b style="color:var(--rec)">CANLI</b>':""}</span><span class="nm">${esc(s.name)}</span>
+    <span class="bar"><i class="a" style="width:${k.answered/t*100}%"></i><i class="p" style="width:${k.partial/t*100}%"></i></span>
+    <span class="ct mono">Core ${k.answered}/${k.total} · Deep ${d.answered+d.partial}/${d.total}</span></button>`; }).join("");
+  const s=S.sessions.find(x=>x.id===S.tab); $("coName").textContent=s.name; $("coFocus").textContent=[s.focus,s.who].filter(Boolean).join(" · ");
+  $("liveTag").innerHTML = s.id===S.app.active_session ? "" : `Canlı oturum: <b>${esc(sessName(S.app.active_session))}</b> · <button id="makeLive" style="padding:2px 8px;font-size:.8rem">Bunu canlı yap</button>`;
+  const tb=$("types").children; tb[0].textContent=`Core (${counts(s.id,"core").total})`; tb[1].textContent=`Deep-dive (${counts(s.id,"deep").total})`;
+  $("autoSession").checked=!!S.app.auto_session; }
+function qItem(q,n){
+  const pr=q.priority?`<span class="tag ${/must/i.test(q.priority)?"must":/f2f/i.test(q.priority)?"crit":""}">${esc(q.priority)}</span>`:"";
+  let dd=""; if(q.type==="core"){ const ds=qsOf(q.session_id,"deep").filter(x=>x.step===q.step); if(ds.length) dd=`<span>Deep-dive ${ds.filter(x=>x.status==="answered"||x.status==="partial").length}/${ds.length}</span>`; }
+  return `<li class="q${S.flash.has(q.id)?" flash":""}" data-qid="${q.id}"><span class="n">${esc(n)}</span>
+   <div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span class="txt">${esc(q.text)}</span><span class="sub">${pr}${q.type==="core"&&q.stage?`<span>${esc(q.stage)}</span>`:""}${dd}${q.source==="added"?"<span>Sonradan eklendi</span>":""}<span class="mono">${esc(q.id)}</span></span></div>
+   <button class="pill ${q.status}" data-act="cycle">${STATUS[q.status]}</button>
+   <div class="ans"><textarea data-act="answer" rows="${q.answer?2:1}" placeholder="Cevap notu…">${esc(q.answer)}</textarea>
+   ${q.quote?`<div class="quote">“${esc(q.quote)}”</div>`:""}${q.updated_at?`<div class="hint mono">${esc(q.updated_by||"")} · ${hhmm(q.updated_at)}</div>`:""}</div></li>`; }
+const pass=q=>S.filter==="all"||(S.filter==="must"?isMust(q):q.status===S.filter);
+function renderList(){ const all=qsOf(S.tab,S.type), qs=all.filter(pass), ul=$("qlist");
+  if(!qs.length){ ul.innerHTML=`<li class="q"><span></span><span class="hint">Bu filtrede soru yok.</span></li>`; S.flash.clear(); return; }
+  if(S.type==="core") ul.innerHTML=qs.map(q=>qItem(q,q.step??"+")).join("");
+  else { const cores=qsOf(S.tab,"core"); let h="",last=undefined,i=0;
+    for(const q of qs){ if(q.step!==last){ last=q.step; i=0; const c=cores.find(x=>x.step===q.step), g=all.filter(x=>x.step===q.step);
+      h+=`<li class="group"><span class="gt">Adım ${q.step??"–"} · ${esc(q.stage||"")}</span>${c?`<span class="gc">Core: ${esc(c.text)} · <b>${STATUS[c.status]}</b> · deep-dive ${g.filter(x=>x.status==="answered"||x.status==="partial").length}/${g.length}</span>`:""}</li>`; }
+      i++; h+=qItem(q,`${q.step??"+"}.${i}`); }
+    ul.innerHTML=h; }
+  S.flash.clear(); }
+function renderFeed(){ const f=$("feed"); const bottom=f.scrollHeight-f.scrollTop-f.clientHeight<40;
+  const segs=S.segs.slice(-150);
+  f.innerHTML=segs.map(s=>`<div class="${s.processed?"done":""}${s.is_note?" note":""}"><span class="t">${hhmm(s.t)}</span>${s.is_note?"NOT: ":""}${esc(s.text)}</div>`).join("")||`<span class="hint">Kayıt başladığında konuşma burada akar. Claude yaklaşık her dakika yeni kısmı okuyup soruları işaretler.</span>`;
+  if(bottom) f.scrollTop=f.scrollHeight; $("pending").textContent=`${pendingWords()} kelime bekliyor`; }
+function renderNotes(){ const n=S.notes.filter(x=>x.session_id===S.tab);
+  $("notes").innerHTML=n.length?n.map(x=>`<li>${hhmm(x.created_at)} · ${esc(x.text)}</li>`).join(""):`<li class="hint" style="list-style:none;margin-left:-18px">Soru listesine uymayan önemli bilgiler (aksiyon, rakam, isim) burada toplanır.</li>`; }
+function renderMic(){ const btn=$("micBtn"), on=iAmRecording(), other=!on&&micFresh();
+  btn.classList.toggle("on",on); btn.textContent=on?"■ Kaydı durdur":other?"Kaydı devral":"● Kaydı başlat";
+  $("micWrap").classList.toggle("live",on||other);
+  $("micState").innerHTML=`<span class="dot"></span> ${on?"Siz kayıttasınız":other?`${esc(S.app.mic_holder)} kayıtta`:"Kayıt yok"}`; }
+function renderAi(){ if(S.app.analyzing_until&&new Date(S.app.analyzing_until)>new Date()){ aiState("Claude okuyor…"); return; }
+  const la=S.app.last_analysis; if(!la) return; const [t,kind,msg]=la.split("|"); aiState(`${hhmm(t)} · ${msg}`, kind==="error"); }
+
+/* ---------- report ---------- */
+function reportMd(){ let md=`# Tegeta Discovery — Kapanış raporu (${new Date().toLocaleDateString("tr-TR")})\n\n`; const line=q=>`- [${q.id}]${isMust(q)?" (Must ask)":""} ${q.text}`;
+  for(const s of S.sessions){ const core=qsOf(s.id,"core"), deep=qsOf(s.id,"deep"), k=counts(s.id,"core"), d=counts(s.id,"deep");
+    md+=`## ${s.name} (${s.time||""})\nCore: ${k.answered}/${k.total} cevaplandı, ${k.partial} kısmen, ${k.open} açık · Deep-dive: ${d.answered} cevaplandı, ${d.partial} kısmen, ${d.open} açık\n\n`;
+    const o=core.filter(q=>q.status==="open").sort((a,b)=>isMust(b)-isMust(a)), p=core.filter(q=>q.status==="partial"), a=core.filter(q=>q.status==="answered");
+    if(o.length) md+=`### Core – cevaplanmayanlar\n${o.map(line).join("\n")}\n\n`;
+    if(p.length) md+=`### Core – kısmen\n${p.map(q=>`${line(q)}\n  - Not: ${q.answer||"-"}`).join("\n")}\n\n`;
+    if(a.length) md+=`### Core – cevaplananlar\n${a.map(q=>`${line(q)}\n  - ${q.answer||"-"}`).join("\n")}\n\n`;
+    const da=deep.filter(q=>q.status==="answered"||q.status==="partial"), dn=deep.filter(q=>q.status==="open");
+    if(da.length) md+=`### Deep-dive – cevap alınanlar\n${da.map(q=>`${line(q)}\n  - ${q.answer||"-"}`).join("\n")}\n\n`;
+    if(dn.length) md+=`### Deep-dive – sorulmayanlar\n${dn.map(line).join("\n")}\n\n`;
+    const n=S.notes.filter(x=>x.session_id===s.id); if(n.length) md+=`### Ek notlar\n${n.map(x=>`- ${x.text}`).join("\n")}\n\n`; }
+  return md; }
+function download(name,text,type){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; a.click(); }
+async function fullTranscript(){ const out=[]; let from=0; for(;;){ const {data,error}=await sb.from("segments").select("*").order("id").range(from,from+999); if(error||!data.length) break; out.push(...data); if(data.length<1000) break; from+=1000; } return out; }
+function renderReport(){ let tot={total:0,answered:0,partial:0,open:0}; S.sessions.forEach(s=>{const k=counts(s.id,"core"); for(const x in tot) tot[x]+=k[x];});
+  let h=`<div class="row" style="justify-content:space-between"><div><span class="eyebrow">Kapanış raporu</span><h2>Ne kaldı?</h2><span class="hint">Core: ${tot.answered} cevaplandı · ${tot.partial} kısmen · ${tot.open} açık / ${tot.total}</span></div>
+   <div class="row"><button id="copyRep">Kopyala</button><button id="dlRep" class="primary">Markdown indir</button><button id="dlTr">Transkripti indir</button></div></div>`;
+  for(const s of S.sessions){ const core=qsOf(s.id,"core"), deep=qsOf(s.id,"deep"), k=counts(s.id,"core");
+    const o=core.filter(q=>q.status==="open").sort((a,b)=>isMust(b)-isMust(a)), p=core.filter(q=>q.status==="partial"), dn=deep.filter(q=>q.status==="open");
+    const li=q=>`<li>${isMust(q)?'<span class="tag must">Must ask</span> ':""}${esc(q.text)} <span class="mono hint">${esc(q.id)}</span></li>`;
+    h+=`<div class="rep-co"><h3>${esc(s.name)} <span class="hint mono">${esc(s.time||"")} · core ${k.answered}/${k.total}</span></h3>
+     ${o.length?`<span class="eyebrow">Core – cevaplanmayanlar (${o.length})</span><ol>${o.map(li).join("")}</ol>`:`<span class="hint">Açık core soru yok.</span>`}
+     ${p.length?`<span class="eyebrow">Core – kısmen (${p.length})</span><ol>${p.map(q=>`<li>${esc(q.text)}<br><span class="hint">${esc(q.answer)}</span></li>`).join("")}</ol>`:""}
+     ${dn.length?`<details class="dd"><summary>Deep-dive – sorulmayanlar (${dn.length}/${deep.length})</summary><ol>${dn.map(li).join("")}</ol></details>`:""}</div>`; }
+  $("reportBody").innerHTML=h;
+  $("copyRep").onclick=async()=>{ try{ await navigator.clipboard.writeText(reportMd()); $("copyRep").textContent="Kopyalandı"; }catch{ $("copyRep").textContent="Kopyalanamadı"; } };
+  $("dlRep").onclick=()=>download("tegeta-kapanis-raporu.md",reportMd(),"text/markdown");
+  $("dlTr").onclick=async()=>{ const all=await fullTranscript(); download("tegeta-transkript.txt", all.map(s=>`[${hhmm(s.t)}] [${sessName(s.session_id)}] ${s.author?`(${s.author}) `:""}${s.is_note?"NOT: ":""}${s.text}`).join("\n"),"text/plain"); }; }
+
+/* ---------- UI events ---------- */
+function setView(v){ S.view=v; $("board").hidden=v!=="board"; $("report").hidden=v!=="report"; $("tabs").hidden=false;
+  $("vBoard").setAttribute("aria-pressed",v==="board"); $("vReport").setAttribute("aria-pressed",v==="report"); if(v==="report") renderReport(); }
+$("vBoard").onclick=()=>setView("board"); $("vReport").onclick=()=>setView("report");
+$("logout").onclick=async()=>{ if(want) await stopRec(); await sb.auth.signOut(); location.reload(); };
+$("tabs").addEventListener("click",e=>{ const b=e.target.closest("[data-cid]"); if(!b) return; S.tab=b.dataset.cid; lsSet("mc.tab",S.tab); $("addForm").hidden=true; render(); });
+document.addEventListener("click",async e=>{ if(e.target.id!=="makeLive") return;
+  await guard(sb.from("app_state").update({active_session:S.tab, auto_session:false}).eq("id",1)); });
+$("autoSession").onchange=()=>guard(sb.from("app_state").update({auto_session:$("autoSession").checked}).eq("id",1));
+$("types").addEventListener("click",e=>{ const b=e.target.closest("[data-t]"); if(!b) return; S.type=b.dataset.t; [...$("types").children].forEach(x=>x.setAttribute("aria-pressed",x===b)); renderList(); });
+$("filters").addEventListener("click",e=>{ const b=e.target.closest("[data-f]"); if(!b) return; S.filter=b.dataset.f; [...$("filters").children].forEach(x=>x.setAttribute("aria-pressed",x===b)); renderList(); });
+$("qlist").addEventListener("click",async e=>{ const b=e.target.closest("[data-act=cycle]"); if(!b) return; const q=S.Q.get(b.closest("[data-qid]").dataset.qid);
+  const next=CYCLE[(CYCLE.indexOf(q.status)+1)%4]; Object.assign(q,{status:next}); renderList();
+  await guard(sb.from("questions").update({status:next, updated_by:me.email, updated_at:new Date().toISOString()}).eq("id",q.id)); });
+$("qlist").addEventListener("focusout",async e=>{ const t=e.target; if(t.dataset.act!=="answer") return; const q=S.Q.get(t.closest("[data-qid]").dataset.qid); const v=t.value.trim();
+  if(v!==(q.answer||"")){ const p={answer:v, updated_by:me.email, updated_at:new Date().toISOString()}; if(q.status==="open"&&v) p.status="partial"; Object.assign(q,p);
+    await guard(sb.from("questions").update(p).eq("id",q.id)); }
+  setTimeout(render,0); });
+
+/* add question */
+function fillParents(){ const cores=qsOf(S.tab,"core"); $("parentSel").innerHTML=cores.map(c=>`<option value="${esc(c.id)}">${esc((c.step??"+")+". "+c.text.slice(0,110))}</option>`).join(""); }
+function syncAddType(){ const deep=document.querySelector('input[name=qtype]:checked').value==="deep"; $("parentRow").hidden=!deep; $("stageRow").hidden=deep;
+  $("prioSel").value=deep?"Optional":"Use if relevant"; }
+$("addBtn").onclick=()=>{ const f=$("addForm"); f.hidden=!f.hidden; if(!f.hidden){ $("addTitle").textContent=`Yeni soru · ${sessName(S.tab)}`; fillParents(); syncAddType(); $("qText").focus(); } };
+$("addCancel").onclick=()=>{ $("addForm").hidden=true; };
+document.querySelectorAll('input[name=qtype]').forEach(r=>r.onchange=syncAddType);
+$("addForm").addEventListener("submit",async e=>{ e.preventDefault(); const text=$("qText").value.trim(); if(!text) return;
+  const type=document.querySelector('input[name=qtype]:checked').value; let step=null, stage=$("stageIn").value.trim()||"Added questions";
+  if(type==="deep"){ const p=S.Q.get($("parentSel").value); if(!p){ $("addMsg").textContent="Önce bir core soru seçin."; return; } step=p.step; stage=p.stage; }
+  else { const st=qsOf(S.tab,"core").map(q=>q.step||0); step=(st.length?Math.max(...st):0)+1; }
+  const ord=Math.max(0,...qsOf(S.tab).map(q=>q.ord||0))+1;
+  const row={id:(type==="core"?"AC":"AD")+Math.random().toString(36).slice(2,7).toUpperCase(), session_id:S.tab, type, step, stage, text, priority:$("prioSel").value, ord, source:"added"};
+  try{ await guard(sb.from("questions").insert(row)); S.Q.set(row.id,{...row,status:"open",answer:"",quote:""}); $("qText").value=""; $("stageIn").value=""; $("addMsg").textContent="Eklendi."; S.type=type;
+    [...$("types").children].forEach(x=>x.setAttribute("aria-pressed",x.dataset.t===type)); S.flash.add(row.id); render(); setTimeout(()=>$("addMsg").textContent="",2500); }catch{} });
+
+/* notes */
+$("noteIn").addEventListener("keydown",async e=>{ if(e.key!=="Enter") return; const v=e.target.value.trim(); if(!v) return; e.target.value="";
+  await guard(sb.from("segments").insert({session_id:S.app.active_session, text:v, is_note:true, author:me.email})); });
+
+/* ---------- recording (only the mic holder) ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition; let rec=null, want=false, wake=null, hb=null;
+$("lang").value=lsGet("mc.lang")||"en-US"; $("lang").onchange=()=>{ lsSet("mc.lang",$("lang").value); if(want){ try{rec.stop();}catch{} } };
+function startRec(){ rec=new SR(); rec.lang=$("lang").value; rec.continuous=true; rec.interimResults=true;
+  rec.onresult=e=>{ let im=""; for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal){ const t=r[0].transcript.trim(); if(t) sb.from("segments").insert({session_id:S.app.active_session, text:t, author:me.email}).then(({error})=>{ if(error) banner("Transkript kaydedilemedi: "+error.message); }); } else im+=r[0].transcript; } $("interim").textContent=im; };
+  rec.onerror=e=>{ if(e.error==="not-allowed"||e.error==="service-not-allowed"){ stopRec(); banner("Mikrofon izni yok: adres çubuğundaki simgeden izin verin."); } };
+  rec.onend=()=>{ $("interim").textContent=""; if(want) setTimeout(()=>{ try{ startRec(); }catch{} },300); };
+  rec.start(); }
+async function beat(first){ let q=sb.from("app_state").update({mic_holder:me.email, mic_heartbeat:new Date().toISOString()}).eq("id",1);
+  if(!first) q=q.eq("mic_holder",me.email);           // someone took over: don't overwrite them
+  await q; }
+async function stopRec(){ want=false; try{rec?.stop();}catch{} clearInterval(hb); try{wake?.release();}catch{}
+  if(S.app.mic_holder===me.email) await sb.from("app_state").update({mic_holder:null, mic_heartbeat:null}).eq("id",1); renderMic(); }
+$("micBtn").onclick=async()=>{ if(!SR){ banner("Bu tarayıcı canlı konuşma tanımayı desteklemiyor. Chrome veya Edge kullanın."); return; }
+  if(want){ await stopRec(); return; }
+  want=true; banner(""); await beat(true); hb=setInterval(()=>beat(false),HEARTBEAT); startRec(); renderMic();
+  try{ wake=await navigator.wakeLock?.request("screen"); }catch{} };
+window.addEventListener("beforeunload",()=>{ if(want&&S.app.mic_holder===me.email) sb.from("app_state").update({mic_holder:null,mic_heartbeat:null}).eq("id",1); });
+document.addEventListener("visibilitychange",async()=>{ if(want&&document.visibilityState==="visible"){ try{ wake=await navigator.wakeLock?.request("screen"); }catch{} } });
+
+/* ---------- analysis ---------- */
+async function analyze(manual){
+  if(!manual&&Date.now()<S.backoff) return; S.lastCall=Date.now();
+  const { data:{ session } } = await sb.auth.getSession(); if(!session) return;
+  if(manual) aiState("Claude okuyor…");
+  try{ const r=await fetch("/api/analyze",{method:"POST",headers:{Authorization:`Bearer ${session.access_token}`}});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){ S.backoff=Date.now()+60000; aiState((j.error||`Hata ${r.status}`)+" Metin bekletiliyor.",true); return; }
+    if(j.status==="busy"&&manual) aiState("Claude zaten okuyor, birazdan güncellenecek.");
+    if(j.status==="idle"&&manual) aiState("Yeni konuşma yok.");
+    if(j.more) setTimeout(()=>analyze(false),1500);
+  }catch{ S.backoff=Date.now()+30000; aiState("Sunucuya ulaşılamadı; tekrar denenecek.",true); } }
+$("runNow").onclick=()=>analyze(true);
+
+function sessionByClock(){ const n=new Date(), m=n.getHours()*60+n.getMinutes();
+  for(const s of S.sessions){ const t=(s.time||"").match(/(\d\d):(\d\d)\D+(\d\d):(\d\d)/); if(!t) continue; if(m>=+t[1]*60+ +t[2]&&m<+t[3]*60+ +t[4]) return s.id; } return null; }
+setInterval(async()=>{ if(!want) return;              // only the recording laptop drives the clock
+  if(S.app.auto_session){ const id=sessionByClock(); if(id&&id!==S.app.active_session) await sb.from("app_state").update({active_session:id}).eq("id",1); }
+  const p=pending(); if(!p.length) return; const age=(Date.now()-S.lastCall)/1000, w=pendingWords(), mixed=p.some(s=>s.session_id!==p[0].session_id);
+  if(mixed||(w>=30&&age>=INTERVAL)||w>=400) analyze(false); },5000);
+
+/* ---------- data ---------- */
+async function loadAll(){
+  const [s,q,g,n,a]=await Promise.all([ sb.from("sessions").select("*").order("ord"), sb.from("questions").select("*"),
+    sb.from("segments").select("*").order("id",{ascending:false}).limit(300), sb.from("notes").select("*").order("id"), sb.from("app_state").select("*").eq("id",1).maybeSingle() ]);
+  const err=[s,q,g,n,a].find(x=>x.error); if(err){ banner("Veriler yüklenemedi: "+err.error.message+". Supabase'de schema.sql ve seed.sql çalıştırıldı mı?"); return false; }
+  S.sessions=s.data; S.Q=new Map(q.data.map(x=>[x.id,x])); S.segs=g.data.reverse(); S.notes=n.data; S.app=a.data||{};
+  if(!S.sessions.length) banner("Soru bankası boş. Supabase SQL Editor'da seed.sql'i çalıştırın.");
+  return true; }
+function subscribe(){
+  sb.channel("live")
+    .on("postgres_changes",{event:"*",schema:"public",table:"questions"},p=>{ if(p.new?.id){ const old=S.Q.get(p.new.id); if(old&&(old.status!==p.new.status||old.answer!==p.new.answer)) S.flash.add(p.new.id); S.Q.set(p.new.id,p.new); render(); } })
+    .on("postgres_changes",{event:"*",schema:"public",table:"segments"},p=>{ if(!p.new?.id) return; const i=S.segs.findIndex(x=>x.id===p.new.id);
+        if(i>=0) S.segs[i]=p.new; else { S.segs.push(p.new); if(S.segs.length>600) S.segs=S.segs.slice(-400); } renderFeed(); })
+    .on("postgres_changes",{event:"INSERT",schema:"public",table:"notes"},p=>{ S.notes.push(p.new); renderNotes(); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"app_state"},p=>{ const prev=S.app.active_session; S.app=p.new||S.app;
+        if(want&&S.app.mic_holder&&S.app.mic_holder!==me.email){ want=false; try{rec?.stop();}catch{} clearInterval(hb); banner(`Kaydı ${S.app.mic_holder} devraldı; bu cihazda kayıt durdu.`); }
+        if(prev!==S.app.active_session&&S.tab===prev){ S.tab=S.app.active_session; } render(); })
+    .subscribe(st=>{ if(st==="SUBSCRIBED") banner(""); if(st==="CHANNEL_ERROR"||st==="TIMED_OUT") banner("Canlı bağlantı koptu, yeniden bağlanıyor…"); });
+}
+setInterval(()=>{ if(S.app.analyzing_until) renderAi(); renderMic(); },10000);
+
+/* ---------- auth & boot ---------- */
+async function enter(session){ me=session.user; $("login").hidden=true; $("app").hidden=false; $("who").textContent=me.email;
+  if(await loadAll()){ subscribe(); render(); } }
+$("loginForm").addEventListener("submit",async e=>{ e.preventDefault(); $("loginMsg").textContent="Giriş yapılıyor…";
+  const {data,error}=await sb.auth.signInWithPassword({email:$("email").value.trim(), password:$("password").value});
+  if(error){ $("loginMsg").textContent="Giriş başarısız: e-posta veya şifre yanlış."; return; } enter(data.session); });
+(async function boot(){
+  try{ const cfg=await (await fetch("/api/config")).json(); if(cfg.error) throw new Error(cfg.error);
+    sb=supabase.createClient(cfg.url,cfg.anonKey); }
+  catch(e){ document.body.insertAdjacentHTML("afterbegin",`<div class="panel box" style="margin:16px">Kurulum eksik: ${esc(e.message)}</div>`); return; }
+  const {data:{session}}=await sb.auth.getSession(); if(session) enter(session); else $("login").hidden=false; })();
+</script>
+</body>
+</html>
