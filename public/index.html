@@ -92,6 +92,25 @@ details.dd summary{cursor:pointer;font-weight:600;font-size:.87rem}
 .setup{border-color:var(--accent)}
 .badge{background:var(--accent-soft);border-radius:999px;padding:2px 10px;font-size:.8rem}
 .check{display:flex;gap:6px;align-items:center;font-size:.85rem;color:var(--muted)}
+
+.lh{position:sticky;top:0;z-index:3;background:var(--surface);border-radius:12px 12px 0 0}
+#search{width:190px;padding:6px 10px;font-size:.88rem}
+#coStats b{color:var(--fg);font-family:var(--f-mono);font-weight:500}
+#coStats .must-left{color:var(--bad);font-weight:600}
+.q{cursor:default}
+.q.sel{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.addans{align-self:flex-start;background:none;border:none;padding:0;color:var(--muted);font-size:.8rem;text-decoration:underline dotted;text-underline-offset:3px}
+.addans:hover{color:var(--fg)}
+#feed{max-height:38vh}
+#recbar{position:fixed;inset:0 0 auto;height:3px;background:var(--rec);z-index:40}
+kbd{font-family:var(--f-mono);font-size:.72rem;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:var(--surface);color:var(--fg);white-space:nowrap}
+.overlay{position:fixed;inset:0;background:rgb(10 12 18 / .45);display:grid;place-items:center;z-index:50;padding:16px}
+.sheet{max-width:620px;width:100%;max-height:85vh;overflow:auto}
+.keys{display:grid;grid-template-columns:150px 1fr;gap:6px 14px;align-items:center;font-size:.9rem;margin:0}
+.keys dt{display:flex;gap:4px;flex-wrap:wrap}
+.keys dd{margin:0;color:var(--muted)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:.88rem;z-index:60;box-shadow:0 6px 20px rgb(0 0 0 / .2)}
+button[data-armed]{background:var(--bad)!important;border-color:var(--bad)!important;color:#fff!important}
 </style>
 </head>
 <body>
@@ -125,6 +144,7 @@ details.dd summary{cursor:pointer;font-weight:600;font-size:.87rem}
       <nav class="row views">
         <button id="vBoard" aria-pressed="true">Canlı takip</button>
         <button id="vReport" aria-pressed="false">Kapanış raporu</button>
+        <button id="helpBtn" title="Klavye kısayolları">Kısayollar <kbd>?</kbd></button>
         <button id="logout">Çıkış</button>
       </nav>
     </div>
@@ -137,10 +157,11 @@ details.dd summary{cursor:pointer;font-weight:600;font-size:.87rem}
       <div class="panel">
         <div class="lh">
           <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
-            <h2 id="coName"></h2><span class="hint" id="coFocus"></span><span class="hint" id="liveTag"></span>
+            <h2 id="coName"></h2><span class="hint" id="coFocus"></span><span class="hint" id="coStats"></span><span class="hint" id="liveTag"></span>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
             <div class="row">
+              <input type="search" id="search" placeholder="Soru ara  ( / )" aria-label="Soru ara">
               <div class="types" id="types"><button data-t="core" aria-pressed="true">Core</button><button data-t="deep" aria-pressed="false">Deep-dive</button></div>
               <button id="addBtn">+ Soru ekle</button>
             </div>
@@ -192,6 +213,40 @@ details.dd summary{cursor:pointer;font-weight:600;font-size:.87rem}
     </section>
 
     <section id="report" class="panel" hidden><div class="report" id="reportBody" lang="en"></div></section>
+    <div id="recbar" hidden></div>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <div id="help" class="overlay" hidden>
+      <div class="sheet panel box" role="dialog" aria-label="Klavye kısayolları">
+        <div class="row" style="justify-content:space-between"><h2>Klavye kısayolları</h2><button id="helpClose">Kapat <kbd>Esc</kbd></button></div>
+        <span class="hint">Bir metin kutusuna yazarken kısayollar çalışmaz; <kbd>Esc</kbd> ile kutudan çıkın.</span>
+        <span class="eyebrow">Gezinme</span>
+        <dl class="keys">
+          <dt><kbd>1</kbd>…<kbd>7</kbd></dt><dd>Oturum sekmesine geç</dd>
+          <dt><kbd>C</kbd> <kbd>D</kbd></dt><dd>Core / Deep-dive görünümü</dd>
+          <dt><kbd>F</kbd></dt><dd>Filtreyi değiştir (Tümü → Açık → Kısmen → Cevaplandı → Must ask)</dd>
+          <dt><kbd>/</kbd></dt><dd>Soru ara</dd>
+          <dt><kbd>G</kbd></dt><dd>Canlı takip ↔ Kapanış raporu</dd>
+        </dl>
+        <span class="eyebrow">Seçili soru</span>
+        <dl class="keys">
+          <dt><kbd>J</kbd> <kbd>K</kbd> · <kbd>↓</kbd> <kbd>↑</kbd></dt><dd>Sonraki / önceki soruyu seç</dd>
+          <dt><kbd>Y</kbd></dt><dd>Cevaplandı</dd>
+          <dt><kbd>P</kbd></dt><dd>Kısmen</dd>
+          <dt><kbd>O</kbd></dt><dd>Açık</dd>
+          <dt><kbd>S</kbd></dt><dd>Atlandı</dd>
+          <dt><kbd>X</kbd></dt><dd>Durumu sırayla değiştir</dd>
+          <dt><kbd>E</kbd></dt><dd>Cevap notunu düzenle · kaydetmek için <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd></dd>
+        </dl>
+        <span class="eyebrow">Toplantı</span>
+        <dl class="keys">
+          <dt><kbd>N</kbd></dt><dd>Transkripte not ekle</dd>
+          <dt><kbd>A</kbd></dt><dd>Şimdi analiz et</dd>
+          <dt><kbd>Q</kbd></dt><dd>Yeni soru ekle</dd>
+          <dt><kbd>Shift</kbd>+<kbd>R</kbd></dt><dd>Kaydı başlat / durdur (durdurmak için iki kez)</dd>
+          <dt><kbd>?</kbd></dt><dd>Bu paneli aç / kapat</dd>
+        </dl>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -207,7 +262,7 @@ const isMust=q=>/must|critical/i.test(q.priority||"");
 const lsGet=k=>{try{return localStorage.getItem(k);}catch{return null;}}, lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch{}};
 
 let sb=null, me=null;
-const S={sessions:[], Q:new Map(), segs:[], notes:[], app:{}, tab:lsGet("mc.tab"), type:"core", filter:"all", view:"board", flash:new Set(), lastCall:0, backoff:0};
+const S={sessions:[], Q:new Map(), segs:[], notes:[], app:{}, tab:lsGet("mc.tab"), type:"core", filter:"all", view:"board", flash:new Set(), lastCall:0, backoff:0, sel:null, editing:null, search:"", recStart:null};
 
 /* ---------- helpers ---------- */
 const qsOf=(sid,type)=>[...S.Q.values()].filter(q=>q.session_id===sid&&(!type||q.type===type)).sort((a,b)=>(a.step??999)-(b.step??999)||a.ord-b.ord);
@@ -231,19 +286,26 @@ function renderTabs(){ if(!S.sessions.length) return;
     <span class="bar"><i class="a" style="width:${k.answered/t*100}%"></i><i class="p" style="width:${k.partial/t*100}%"></i></span>
     <span class="ct mono">Core ${k.answered}/${k.total} · Deep ${d.answered+d.partial}/${d.total}</span></button>`; }).join("");
   const s=S.sessions.find(x=>x.id===S.tab); $("coName").textContent=s.name; $("coFocus").textContent=[s.focus,s.who].filter(Boolean).join(" · ");
+  { const k=counts(s.id,"core"), mo=qsOf(s.id,"core").filter(q=>isMust(q)&&q.status==="open").length;
+    $("coStats").innerHTML=`Core <b>${k.answered}</b>/${k.total} cevaplandı · <b>${k.partial}</b> kısmen · <span class="${mo?"must-left":""}">${mo} Must ask açık</span>`; }
   $("liveTag").innerHTML = s.id===S.app.active_session ? "" : `Canlı oturum: <b>${esc(sessName(S.app.active_session))}</b> · <button id="makeLive" style="padding:2px 8px;font-size:.8rem">Bunu canlı yap</button>`;
   const tb=$("types").children; tb[0].textContent=`Core (${counts(s.id,"core").total})`; tb[1].textContent=`Deep-dive (${counts(s.id,"deep").total})`;
   $("autoSession").checked=!!S.app.auto_session; }
-function qItem(q,n){
+function qItem(q,n,showType){
   const pr=q.priority?`<span class="tag ${/must/i.test(q.priority)?"must":/f2f/i.test(q.priority)?"crit":""}">${esc(q.priority)}</span>`:"";
   let dd=""; if(q.type==="core"){ const ds=qsOf(q.session_id,"deep").filter(x=>x.step===q.step); if(ds.length) dd=`<span>Deep-dive ${ds.filter(x=>x.status==="answered"||x.status==="partial").length}/${ds.length}</span>`; }
-  return `<li class="q${S.flash.has(q.id)?" flash":""}" data-qid="${q.id}"><span class="n">${esc(n)}</span>
-   <div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span class="txt">${esc(q.text)}</span><span class="sub">${pr}${q.type==="core"&&q.stage?`<span>${esc(q.stage)}</span>`:""}${dd}${q.source==="added"?"<span>Sonradan eklendi</span>":""}<span class="mono">${esc(q.id)}</span></span></div>
-   <button class="pill ${q.status}" data-act="cycle">${STATUS[q.status]}</button>
-   <div class="ans"><textarea data-act="answer" rows="${q.answer?2:1}" placeholder="Cevap notu…">${esc(q.answer)}</textarea>
+  const showAns=!!q.answer||S.editing===q.id;
+  return `<li class="q${S.flash.has(q.id)?" flash":""}${S.sel===q.id?" sel":""}" data-qid="${q.id}"><span class="n">${esc(n)}</span>
+   <div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span class="txt">${esc(q.text)}</span><span class="sub">${showType?`<span class="tag">${q.type==="core"?"Core":"Deep-dive"}</span>`:""}${pr}${q.type==="core"&&q.stage?`<span>${esc(q.stage)}</span>`:""}${dd}${q.source==="added"?"<span>Sonradan eklendi</span>":""}<span class="mono">${esc(q.id)}</span></span></div>
+   <button class="pill ${q.status}" data-act="cycle" title="Durumu değiştir (X)">${STATUS[q.status]}</button>
+   <div class="ans">${showAns?`<textarea data-act="answer" rows="${q.answer?2:1}" placeholder="Cevap notu…  (kaydet: ⌘/Ctrl+Enter)">${esc(q.answer)}</textarea>`:`<button class="addans" data-act="addnote">+ Cevap notu</button>`}
    ${q.quote?`<div class="quote">“${esc(q.quote)}”</div>`:""}${q.updated_at?`<div class="hint mono">${esc(q.updated_by||"")} · ${hhmm(q.updated_at)}</div>`:""}</div></li>`; }
 const pass=q=>S.filter==="all"||(S.filter==="must"?isMust(q):q.status===S.filter);
-function renderList(){ const all=qsOf(S.tab,S.type), qs=all.filter(pass), ul=$("qlist");
+function renderList(){ const ul=$("qlist"), term=S.search.trim().toLowerCase();
+  if(term){ const hits=qsOf(S.tab).filter(q=>(q.text+" "+(q.answer||"")+" "+q.id).toLowerCase().includes(term)).filter(pass);
+    ul.innerHTML=hits.length?hits.map(q=>qItem(q,q.type==="core"?(q.step??"+"):`${q.step??"+"}·`,true)).join(""):`<li class="q"><span></span><span class="hint">“${esc(S.search)}” için bu oturumda soru yok.</span></li>`;
+    S.flash.clear(); return; }
+  const all=qsOf(S.tab,S.type), qs=all.filter(pass);
   if(!qs.length){ ul.innerHTML=`<li class="q"><span></span><span class="hint">Bu filtrede soru yok.</span></li>`; S.flash.clear(); return; }
   if(S.type==="core") ul.innerHTML=qs.map(q=>qItem(q,q.step??"+")).join("");
   else { const cores=qsOf(S.tab,"core"); let h="",last=undefined,i=0;
@@ -258,10 +320,13 @@ function renderFeed(){ const f=$("feed"); const bottom=f.scrollHeight-f.scrollTo
   if(bottom) f.scrollTop=f.scrollHeight; $("pending").textContent=`${pendingWords()} kelime bekliyor`; }
 function renderNotes(){ const n=S.notes.filter(x=>x.session_id===S.tab);
   $("notes").innerHTML=n.length?n.map(x=>`<li>${hhmm(x.created_at)} · ${esc(x.text)}</li>`).join(""):`<li class="hint" style="list-style:none;margin-left:-18px">Soru listesine uymayan önemli bilgiler (aksiyon, rakam, isim) burada toplanır.</li>`; }
+const dur=ms=>{ const t=Math.floor(ms/1000); return [Math.floor(t/3600),Math.floor(t/60)%60,t%60].map(x=>String(x).padStart(2,"0")).join(":"); };
 function renderMic(){ const btn=$("micBtn"), on=iAmRecording(), other=!on&&micFresh();
-  btn.classList.toggle("on",on); btn.textContent=on?"■ Kaydı durdur":other?"Kaydı devral":"● Kaydı başlat";
-  $("micWrap").classList.toggle("live",on||other);
-  $("micState").innerHTML=`<span class="dot"></span> ${on?"Siz kayıttasınız":other?`${esc(S.app.mic_holder)} kayıtta`:"Kayıt yok"}`; }
+  btn.classList.toggle("on",on); if(!btn.dataset.armed) btn.textContent=on?"■ Kaydı durdur":other?"Kaydı devral":"● Kaydı başlat";
+  $("micWrap").classList.toggle("live",on||other); $("recbar").hidden=!on; document.title=(on?"● ":"")+"Meeting Copilot";
+  $("micState").innerHTML=`<span class="dot"></span> ${on?`Siz kayıttasınız${S.recStart?" · <span class=\"mono\">"+dur(Date.now()-S.recStart)+"</span>":""}`:other?`${esc(S.app.mic_holder)} kayıtta`:"Kayıt yok"}`; }
+function armed(btn,label){ if(btn.dataset.armed){ delete btn.dataset.armed; clearTimeout(btn._t); return true; }
+  btn.dataset.armed="1"; btn.textContent=label; btn._t=setTimeout(()=>{ delete btn.dataset.armed; renderMic(); renderTabs(); },3500); return false; }
 function renderAi(){ if(S.app.analyzing_until&&new Date(S.app.analyzing_until)>new Date()){ aiState("Claude okuyor…"); return; }
   const la=S.app.last_analysis; if(!la) return; const [t,kind,msg]=la.split("|"); aiState(`${hhmm(t)} · ${msg}`, kind==="error"); }
 
@@ -301,18 +366,19 @@ function setView(v){ S.view=v; $("board").hidden=v!=="board"; $("report").hidden
 $("vBoard").onclick=()=>setView("board"); $("vReport").onclick=()=>setView("report");
 $("logout").onclick=async()=>{ if(want) await stopRec(); await sb.auth.signOut(); location.reload(); };
 $("tabs").addEventListener("click",e=>{ const b=e.target.closest("[data-cid]"); if(!b) return; S.tab=b.dataset.cid; lsSet("mc.tab",S.tab); $("addForm").hidden=true; render(); });
-document.addEventListener("click",async e=>{ if(e.target.id!=="makeLive") return;
+document.addEventListener("click",async e=>{ if(e.target.id!=="makeLive") return; if(!armed(e.target,"Herkes için değişir · tekrar basın")) return;
   await guard(sb.from("app_state").update({active_session:S.tab, auto_session:false}).eq("id",1)); });
 $("autoSession").onchange=()=>guard(sb.from("app_state").update({auto_session:$("autoSession").checked}).eq("id",1));
 $("types").addEventListener("click",e=>{ const b=e.target.closest("[data-t]"); if(!b) return; S.type=b.dataset.t; [...$("types").children].forEach(x=>x.setAttribute("aria-pressed",x===b)); renderList(); });
 $("filters").addEventListener("click",e=>{ const b=e.target.closest("[data-f]"); if(!b) return; S.filter=b.dataset.f; [...$("filters").children].forEach(x=>x.setAttribute("aria-pressed",x===b)); renderList(); });
-$("qlist").addEventListener("click",async e=>{ const b=e.target.closest("[data-act=cycle]"); if(!b) return; const q=S.Q.get(b.closest("[data-qid]").dataset.qid);
-  const next=CYCLE[(CYCLE.indexOf(q.status)+1)%4]; Object.assign(q,{status:next}); renderList();
-  await guard(sb.from("questions").update({status:next, updated_by:me.email, updated_at:new Date().toISOString()}).eq("id",q.id)); });
+$("qlist").addEventListener("click",e=>{ const row=e.target.closest("[data-qid]"); if(!row) return; const id=row.dataset.qid;
+  if(e.target.closest("[data-act=cycle]")){ S.sel=id; cycleQ(id); return; }
+  if(e.target.closest("[data-act=addnote]")){ editNote(id); return; }
+  S.sel=id; document.querySelectorAll("#qlist .q").forEach(r=>r.classList.toggle("sel",r.dataset.qid===id)); });
 $("qlist").addEventListener("focusout",async e=>{ const t=e.target; if(t.dataset.act!=="answer") return; const q=S.Q.get(t.closest("[data-qid]").dataset.qid); const v=t.value.trim();
   if(v!==(q.answer||"")){ const p={answer:v, updated_by:me.email, updated_at:new Date().toISOString()}; if(q.status==="open"&&v) p.status="partial"; Object.assign(q,p);
     await guard(sb.from("questions").update(p).eq("id",q.id)); }
-  setTimeout(render,0); });
+  S.editing=null; setTimeout(render,0); });
 
 /* add question */
 function fillParents(){ const cores=qsOf(S.tab,"core"); $("parentSel").innerHTML=cores.map(c=>`<option value="${esc(c.id)}">${esc((c.step??"+")+". "+c.text.slice(0,110))}</option>`).join(""); }
@@ -345,14 +411,50 @@ function startRec(){ rec=new SR(); rec.lang=$("lang").value; rec.continuous=true
 async function beat(first){ let q=sb.from("app_state").update({mic_holder:me.email, mic_heartbeat:new Date().toISOString()}).eq("id",1);
   if(!first) q=q.eq("mic_holder",me.email);           // someone took over: don't overwrite them
   await q; }
-async function stopRec(){ want=false; try{rec?.stop();}catch{} clearInterval(hb); try{wake?.release();}catch{}
+async function stopRec(){ want=false; S.recStart=null; try{rec?.stop();}catch{} clearInterval(hb); try{wake?.release();}catch{}
   if(S.app.mic_holder===me.email) await sb.from("app_state").update({mic_holder:null, mic_heartbeat:null}).eq("id",1); renderMic(); }
 $("micBtn").onclick=async()=>{ if(!SR){ banner("Bu tarayıcı canlı konuşma tanımayı desteklemiyor. Chrome veya Edge kullanın."); return; }
-  if(want){ await stopRec(); return; }
-  want=true; banner(""); await beat(true); hb=setInterval(()=>beat(false),HEARTBEAT); startRec(); renderMic();
+  if(want){ if(!armed($("micBtn"),"Durdurmak için tekrar basın")) return; await stopRec(); return; }
+  if(micFresh()&&S.app.mic_holder!==me.email&&!armed($("micBtn"),"Devralmak için tekrar basın")) return;
+  want=true; S.recStart=Date.now(); banner(""); await beat(true); hb=setInterval(()=>beat(false),HEARTBEAT); startRec(); renderMic();
   try{ wake=await navigator.wakeLock?.request("screen"); }catch{} };
 window.addEventListener("beforeunload",()=>{ if(want&&S.app.mic_holder===me.email) sb.from("app_state").update({mic_holder:null,mic_heartbeat:null}).eq("id",1); });
 document.addEventListener("visibilitychange",async()=>{ if(want&&document.visibilityState==="visible"){ try{ wake=await navigator.wakeLock?.request("screen"); }catch{} } });
+
+/* ---------- keyboard ---------- */
+const FILTERS=["all","open","partial","answered","must"];
+let toastT; function toast(m){ const t=$("toast"); t.textContent=m; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,1800); }
+function setType(t){ S.type=t; [...$("types").children].forEach(x=>x.setAttribute("aria-pressed",x.dataset.t===t)); renderList(); }
+function cycleFilter(){ S.filter=FILTERS[(FILTERS.indexOf(S.filter)+1)%FILTERS.length]; [...$("filters").children].forEach(x=>x.setAttribute("aria-pressed",x.dataset.f===S.filter)); renderList(); toast("Filtre: "+$("filters").querySelector(`[data-f=${S.filter}]`).textContent); }
+function moveSel(d){ const rows=[...document.querySelectorAll("#qlist .q[data-qid]")]; if(!rows.length) return; let i=rows.findIndex(r=>r.dataset.qid===S.sel);
+  i=i<0?(d>0?0:rows.length-1):Math.max(0,Math.min(rows.length-1,i+d)); S.sel=rows[i].dataset.qid;
+  rows.forEach(r=>r.classList.toggle("sel",r.dataset.qid===S.sel)); rows[i].scrollIntoView({block:"center",behavior:"smooth"}); }
+async function setQ(id,status){ const q=S.Q.get(id); if(!q||q.status===status) return; q.status=status; renderList(); renderTabs(); toast(`${id} → ${STATUS[status]}`);
+  await guard(sb.from("questions").update({status, updated_by:me.email, updated_at:new Date().toISOString()}).eq("id",id)); }
+function cycleQ(id){ const q=S.Q.get(id); if(q) setQ(id,CYCLE[(CYCLE.indexOf(q.status)+1)%4]); }
+function editNote(id){ S.editing=id; S.sel=id; renderList(); const ta=document.querySelector(`#qlist [data-qid="${id}"] textarea`); if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length); } }
+function toggleHelp(force){ $("help").hidden=force===undefined?!$("help").hidden:!force; }
+$("helpBtn").onclick=()=>toggleHelp(true); $("helpClose").onclick=()=>toggleHelp(false);
+$("help").addEventListener("click",e=>{ if(e.target.id==="help") toggleHelp(false); });
+$("search").addEventListener("input",()=>{ S.search=$("search").value; renderList(); });
+document.addEventListener("keydown",e=>{ if(!me) return;
+  const t=e.target, typing=t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.tagName==="SELECT"||t.isContentEditable);
+  if(typing&&t.dataset.act==="answer"&&e.key==="Enter"&&(e.metaKey||e.ctrlKey)){ e.preventDefault(); t.blur(); return; }
+  if(e.key==="Escape"){ if(!$("help").hidden) return toggleHelp(false); if(typing){ t.blur(); return; }
+    if(!$("addForm").hidden){ $("addForm").hidden=true; return; } if(S.search){ S.search=""; $("search").value=""; renderList(); return; }
+    if(S.sel){ S.sel=null; renderList(); } return; }
+  if(typing||e.metaKey||e.ctrlKey||e.altKey) return;
+  if(e.key==="?"){ e.preventDefault(); return toggleHelp(); }
+  if(e.key==="R"&&e.shiftKey){ e.preventDefault(); return $("micBtn").click(); }
+  if(/^[1-9]$/.test(e.key)){ const s=S.sessions[+e.key-1]; if(s){ S.tab=s.id; lsSet("mc.tab",S.tab); S.sel=null; $("addForm").hidden=true; render(); } return; }
+  const k=e.key.toLowerCase(), sel=S.sel&&S.Q.get(S.sel)?S.sel:null;
+  const map={ c:()=>setType("core"), d:()=>setType("deep"), f:cycleFilter, "/":()=>$("search").focus(), n:()=>$("noteIn").focus(),
+    a:()=>analyze(true), q:()=>$("addBtn").click(), g:()=>setView(S.view==="report"?"board":"report"),
+    j:()=>moveSel(1), k:()=>moveSel(-1), arrowdown:()=>moveSel(1), arrowup:()=>moveSel(-1),
+    x:()=>sel&&cycleQ(sel), y:()=>sel&&setQ(sel,"answered"), p:()=>sel&&setQ(sel,"partial"), o:()=>sel&&setQ(sel,"open"), s:()=>sel&&setQ(sel,"skipped"), e:()=>sel&&editNote(sel) };
+  if((k==="arrowdown"||k==="arrowup")&&S.view!=="board") return;
+  const fn=map[k]; if(fn){ e.preventDefault(); fn(); } });
+setInterval(()=>{ if(want) renderMic(); },1000);
 
 /* ---------- analysis ---------- */
 async function analyze(manual){
