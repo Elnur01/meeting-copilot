@@ -42,6 +42,12 @@ Toplantıyı canlı dinler, konuşmayı Claude'a okutur ve Tegeta soru bankasın
 
 3. **Deploy**'a basın. Çıkan adresi ekiple paylaşın.
 
+### 2b. Railway (alternatif ya da ek adres)
+1. https://railway.com → **New Project → Deploy from GitHub repo** → `meeting-copilot`.
+2. **Variables** sekmesine Vercel'deki 4 değişkeni aynen girin.
+3. **Settings → Networking → Generate Domain**. Çıkan `...up.railway.app` adresi herkese açık; giriş için yine Supabase kullanıcısı gerekir.
+Railway `npm start` ile `server.js`'i çalıştırır. Vercel bu dosyayı kullanmaz, ikisi aynı veritabanıyla birlikte çalışabilir.
+
 ### 3. Test
 1. Adresi açıp kendi kullanıcınızla giriş yapın.
 2. Sağdaki "Canlı oturumu saate göre değiştir" işaretini kaldırın ve B2B Wholesale sekmesinde **Bunu canlı yap**'a basın.

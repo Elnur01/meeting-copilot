@@ -59,7 +59,7 @@ const hhmm = (d) => new Date(d).toISOString().slice(11, 16);
 export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).json({ error: "POST bekleniyor." }); return; }
   for (const k of ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "ANTHROPIC_API_KEY"]) {
-    if (!process.env[k]) { res.status(500).json({ error: `${k} Vercel ortam değişkenlerinde tanımlı değil.` }); return; }
+    if (!process.env[k]) { res.status(500).json({ error: `${k} ortam değişkenlerinde (Vercel veya Railway) tanımlı değil.` }); return; }
   }
   const db = admin();
 
