@@ -98,15 +98,22 @@ export default async function handler(req, res) {
 
     // 4) Claude
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const msg = await client.beta.messages.create({
+    const base = {
       model: MODEL,
       max_tokens: 16000,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
       output_config: { effort: "low" },
       system: [{ type: "text", text: systemPrompt(session, questions), cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: userPrompt(questions, text, prev) }],
-    });
+    };
+    let msg;
+    try {
+      msg = await client.beta.messages.create({ ...base, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" });
+    } catch (err) {
+      // If the account does not accept the fallback option, retry once without it.
+      if (err?.status !== 400) throw err;
+      console.error("analyze: retrying without fallbacks:", err.message);
+      msg = await client.messages.create(base);
+    }
     if (msg.stop_reason === "refusal") throw new Error("Claude bu parçayı işlemedi (refusal).");
     const out = parseJson(msg.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim());
 
@@ -133,6 +140,7 @@ export default async function handler(req, res) {
     await db.from("app_state").update({ last_analysis: `${nowIso}|ok|${summary}` }).eq("id", 1);
     res.status(200).json({ status: "ok", updated, notes: notes.length, more: pending.length > batch.length });
   } catch (e) {
+    console.error("analyze failed:", e?.status, e?.message);
     const m = e?.status === 401 ? "Anthropic API anahtarı geçersiz." : e?.status === 429 ? "Claude hız sınırı; biraz sonra tekrar denenecek." : (e?.message || "Bilinmeyen hata");
     await db.from("app_state").update({ last_analysis: `${nowIso}|error|${m}` }).eq("id", 1);
     res.status(500).json({ error: m });
